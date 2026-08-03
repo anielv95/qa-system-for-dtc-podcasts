@@ -31,7 +31,7 @@ jobs:
           file: ./Dockerfile
           push: true
           #tags: ${{ steps.meta.outputs.tags }}
-          tags: aniel95/llm-project:dev
+          tags: aniel95/llm-project:dev-qa-system-for-dtc-podcasts-latest
           build-args: |
             GH_EMAIL=${{ secrets.GH_EMAIL }}
             GH_USER=${{ secrets.GH_USER }}
