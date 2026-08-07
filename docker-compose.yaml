@@ -1,0 +1,60 @@
+services:
+  # Your Python development container
+  python-app:
+    build:
+      context: .
+      dockerfile: dev.dockerfile
+      args:
+        GH_EMAIL: ${GH_EMAIL:-anielvillegas@gmail.com}
+        GH_USER: ${GH_USER:-anielv95}
+    container_name: python-app
+    working_dir: /gh
+    stdin_open: true   # Equivalent to -it
+    tty: true          # Keeps container running
+    volumes:
+      - ./..:/gh/dev          # Mount current directory to /gh
+      - es_data:/gh/es_data_docker  # Optional: access ES data if needed
+    ports:
+      - "8000:8000"    # Expose any app ports you need
+      - "8888:8888"
+      - "22:22"
+      - "8080:8080"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ES_HOST=elasticsearch
+      - ES_PORT=9200
+    networks:
+      - app-network
+
+  # Elasticsearch container (matches your docker run command)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m  # Memory limits (optional)
+    ports:
+      - "127.0.0.1:9200:9200"  # Bind to localhost only
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+# Named volumes
+volumes:
+  es_data:
+    name: es_data  # Matches the volume name from your docker run
+
+# Custom network for service discovery
+networks:
+  app-network:
+    driver: bridge
